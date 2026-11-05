@@ -14,6 +14,14 @@ FROM python:3.12-slim
 WORKDIR /app
 COPY --from=test /usr/local /usr/local
 COPY --from=test /app /app
+# Tambal paket OS dari repo security: base `python:3.12-slim` membawa apt 3.0.3
+# dengan CVE-2026-109518 (perbaikan 3.0.4 ada di trixie-security), dan gerbang
+# Trivy memblokir image karena celah itu punya versi perbaikan. Stage inilah yang
+# dikirim, jadi menambal di stage `test` tidak menolong. Tanpa pin versi supaya
+# perbaikan berikutnya ikut terbawa tanpa menyunting berkas ini lagi.
+RUN apt-get update \
+    && apt-get -y upgrade \
+    && rm -rf /var/lib/apt/lists/*
 RUN useradd --system --no-create-home appuser
 USER appuser
 EXPOSE 8000

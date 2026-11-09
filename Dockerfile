@@ -19,6 +19,9 @@ COPY --from=test /app /app
 # Trivy memblokir image karena celah itu punya versi perbaikan. Stage inilah yang
 # dikirim, jadi menambal di stage `test` tidak menolong. Tanpa pin versi supaya
 # perbaikan berikutnya ikut terbawa tanpa menyunting berkas ini lagi.
+# Cache-bust dari pipeline: nilai ARG ini berubah tiap build, jadi cache
+# layer apt batal dan apt-get upgrade benar-benar dijalankan ulang.
+ARG AUTORE_APT_REFRESH=0
 RUN apt-get update \
     && apt-get -y upgrade \
     && rm -rf /var/lib/apt/lists/*

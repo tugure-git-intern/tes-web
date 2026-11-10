@@ -14,13 +14,15 @@ FROM python:3.12-slim
 WORKDIR /app
 COPY --from=test /usr/local /usr/local
 COPY --from=test /app /app
-# Tambal paket OS dari repo security: base `python:3.12-slim` membawa apt 3.0.3
-# dengan CVE-2026-109518 (perbaikan 3.0.4 ada di trixie-security), dan gerbang
-# Trivy memblokir image karena celah itu punya versi perbaikan. Stage inilah yang
-# dikirim, jadi menambal di stage `test` tidak menolong. Tanpa pin versi supaya
-# perbaikan berikutnya ikut terbawa tanpa menyunting berkas ini lagi.
-# Cache-bust dari pipeline: nilai ARG ini berubah tiap build, jadi cache
-# layer apt batal dan apt-get upgrade benar-benar dijalankan ulang.
+# Tambal paket OS dari repo security. Base `python:3.12-slim` masih membawa apt
+# 3.0.3, dan CVE-2026-109518 sudah punya perbaikan (3.0.4 di trixie-security),
+# sehingga gerbang Trivy memblokir image. Hanya stage ini yang dikirim, jadi
+# menambal di stage `test` tidak menolong. Tanpa pin versi: `upgrade` ikut
+# membawa perbaikan berikutnya tanpa perlu menyunting template lagi.
+# Cache-bust dari pipeline: Jenkins mengisi ARG ini dengan nomor build, jadi
+# nilai berubah tiap build dan cache layer di bawahnya batal — `apt-get upgrade`
+# benar-benar dieksekusi ulang. Tanpa ini image memakai layer cache berhari-hari
+# lalu (terukur: zlib1g 1+b1, 2 CVE HIGH) dan gerbang Trivy kembali merah.
 ARG AUTORE_APT_REFRESH=0
 RUN apt-get update \
     && apt-get -y upgrade \
